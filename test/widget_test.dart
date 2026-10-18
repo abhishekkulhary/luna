@@ -4,7 +4,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:luna/core/cycle/cycle_providers.dart';
+import 'package:luna/core/cycle/cycle_models.dart';
+import 'package:luna/core/cycle/cycle_predictor.dart';
 import 'package:luna/core/db/app_database.dart';
 import 'package:luna/core/db/providers.dart';
 import 'package:luna/core/theme/app_theme.dart';
@@ -130,14 +131,13 @@ void main() {
 
   testWidgets('cycle ring paints the current cycle in both themes',
       (tester) async {
-    final container = ProviderContainer(
-      overrides: [
-        bleedingDaysProvider.overrideWithValue(
-            [for (var i = 9; i >= 5; i--) addDays(today(), -i)]),
-      ],
+    // Pure predictor, no providers: the forecast provider also watches the
+    // settings stream, which would open the real (encrypted) database.
+    final forecast = const CyclePredictor().forecast(
+      periods: [PeriodInput(addDays(today(), -9), addDays(today(), -5))],
+      settings: const CycleSettings(),
     );
-    addTearDown(container.dispose);
-    final forecast = container.read(cycleForecastProvider);
+    expect(forecast.hasData, isTrue);
 
     for (final theme in [AppTheme.light(), AppTheme.dark()]) {
       await tester.pumpWidget(MaterialApp(
