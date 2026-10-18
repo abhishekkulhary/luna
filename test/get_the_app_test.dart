@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -51,5 +52,17 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('v1.2.0 · 1.0 MB'), findsNWidgets(2));
     expect(find.textContaining('Not published yet'), findsNWidgets(2));
+  });
+
+  testWidgets('screen speaks German in a German locale', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      locale: const Locale('de'),
+      supportedLocales: const [Locale('en'), Locale('de')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      home: GetTheAppScreen(appName: 'App', releases: _releases(404)),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('App herunterladen'), findsOneWidget);
+    expect(find.textContaining('Noch nicht veröffentlicht'), findsNWidgets(DownloadPlatform.values.length));
   });
 }

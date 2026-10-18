@@ -13,6 +13,7 @@ import '../../core/theme/cycle_colors.dart';
 import '../../core/utils/date_helpers.dart';
 import '../../l10n/app_localizations.dart';
 import '../get_the_app/get_the_app_screen.dart';
+import '../get_the_app/get_the_app_strings.dart';
 import '../logging/log_editor.dart';
 import 'calendar_markers.dart';
 
@@ -59,7 +60,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           // The native apps are offered from the web build only.
           if (kIsWeb)
             IconButton(
-              tooltip: 'Get the app',
+              tooltip: GetTheAppStrings.of(context).getTheApp,
               icon: const Icon(Icons.download_outlined),
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
