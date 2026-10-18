@@ -5,6 +5,7 @@ import '../../core/db/providers.dart';
 import '../../core/models/enums.dart';
 import '../../core/security/lock_providers.dart';
 import '../../shared/widgets/app_logo.dart';
+import '../../shared/widgets/luna_ui.dart';
 import 'lock_screen.dart';
 
 /// Wraps the app content and overlays the [LockScreen] whenever a lock is
@@ -71,7 +72,7 @@ class _LockSplash extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      body: Center(child: AppLogo(size: 72)),
+      body: LunaBackground(child: Center(child: AppLogo(size: 72))),
     );
   }
 }

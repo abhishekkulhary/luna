@@ -6,9 +6,11 @@ import 'package:intl/intl.dart';
 import '../../core/db/app_database.dart';
 import '../../core/db/providers.dart';
 import '../../core/notifications/notification_providers.dart';
+import '../../core/theme/luna_palette.dart';
 import '../../core/utils/date_helpers.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/widgets/app_logo.dart';
+import '../../shared/widgets/luna_ui.dart';
 
 /// First-run flow: collects the last period date and typical cycle/period
 /// length, seeds the initial logs, and marks onboarding complete.
@@ -79,55 +81,68 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final l10n = AppLocalizations.of(context);
     final isLast = _page == _pageCount - 1;
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: PageView(
-                controller: _pageController,
-                onPageChanged: (p) => setState(() => _page = p),
+      body: LunaBackground(
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: Column(
                 children: [
-                  const _WelcomePage(),
-                  _DetailsPage(
-                    lastPeriodStart: _lastPeriodStart,
-                    cycleLength: _cycleLength,
-                    periodLength: _periodLength,
-                    enableNotifications: _enableNotifications,
-                    onPickDate: _pickDate,
-                    onCycle: (v) => setState(() => _cycleLength = v),
-                    onPeriod: (v) => setState(() => _periodLength = v),
-                    onNotifications: (v) =>
-                        setState(() => _enableNotifications = v),
+                  Expanded(
+                    child: PageView(
+                      controller: _pageController,
+                      onPageChanged: (p) => setState(() => _page = p),
+                      children: [
+                        const _WelcomePage(),
+                        _DetailsPage(
+                          lastPeriodStart: _lastPeriodStart,
+                          cycleLength: _cycleLength,
+                          periodLength: _periodLength,
+                          enableNotifications: _enableNotifications,
+                          onPickDate: _pickDate,
+                          onCycle: (v) => setState(() => _cycleLength = v),
+                          onPeriod: (v) => setState(() => _periodLength = v),
+                          onNotifications: (v) =>
+                              setState(() => _enableNotifications = v),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Row(
+                      children: [
+                        _Dots(count: _pageCount, active: _page),
+                        const Spacer(),
+                        GlowButton(
+                          onPressed: _saving
+                              ? null
+                              : () {
+                                  if (!isLast) {
+                                    _pageController.nextPage(
+                                      duration: const Duration(
+                                        milliseconds: 300,
+                                      ),
+                                      curve: Curves.easeOut,
+                                    );
+                                  } else {
+                                    _finish();
+                                  }
+                                },
+                          icon: isLast
+                              ? Icons.auto_awesome_rounded
+                              : Icons.arrow_forward_rounded,
+                          label: isLast
+                              ? l10n.getStarted
+                              : l10n.onboardingContinue,
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Row(
-                children: [
-                  _Dots(count: _pageCount, active: _page),
-                  const Spacer(),
-                  FilledButton(
-                    onPressed: _saving
-                        ? null
-                        : () {
-                            if (!isLast) {
-                              _pageController.nextPage(
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeOut,
-                              );
-                            } else {
-                              _finish();
-                            }
-                          },
-                    child: Text(
-                        isLast ? l10n.getStarted : l10n.onboardingContinue),
-                  ),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -165,33 +180,56 @@ class _WelcomePage extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const AppLogo(size: 72),
-          const SizedBox(height: 24),
-          Text(l10n.welcomeTitle,
-              style: theme.textTheme.headlineMedium
-                  ?.copyWith(fontWeight: FontWeight.w800)),
-          const SizedBox(height: 12),
-          Text(l10n.welcomeBody, style: theme.textTheme.bodyLarge),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Icon(Icons.lock_outline, color: theme.colorScheme.primary),
-              const SizedBox(width: 12),
-              Expanded(
-                child:
-                    Text(l10n.welcomePrivacy, style: theme.textTheme.bodyMedium),
-              ),
-            ],
+          DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              boxShadow: [
+                BoxShadow(
+                  color: context.luna.accentStart.withValues(alpha: 0.5),
+                  blurRadius: 36,
+                  spreadRadius: -6,
+                ),
+              ],
+            ),
+            child: const AppLogo(size: 80),
           ),
           const SizedBox(height: 28),
-          Text(l10n.chooseLanguage,
-              style: theme.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          GradientText(
+            l10n.welcomeTitle,
+            style: theme.textTheme.headlineMedium,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            l10n.welcomeBody,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 20),
+          GlassPanel(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                Icon(Icons.lock_outline, color: context.luna.accentEnd),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    l10n.welcomePrivacy,
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 28),
+          Text(l10n.chooseLanguage, style: theme.textTheme.titleMedium),
           const SizedBox(height: 2),
-          Text(l10n.chooseLanguageSub,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              )),
+          Text(
+            l10n.chooseLanguageSub,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
           const SizedBox(height: 12),
           _LangOption(
             label: 'English',
@@ -223,21 +261,29 @@ class _LangOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      elevation: 0,
-      color: selected
-          ? theme.colorScheme.primaryContainer
-          : theme.colorScheme.surfaceContainerHighest,
-      child: ListTile(
-        title: Text(label,
-            style: TextStyle(
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-            )),
-        trailing: selected
-            ? Icon(Icons.check_circle, color: theme.colorScheme.primary)
-            : const Icon(Icons.radio_button_unchecked),
-        onTap: onTap,
+    final luna = context.luna;
+    return GlassPanel(
+      tint: selected ? luna.accentStart : null,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      onTap: onTap,
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+              ),
+            ),
+          ),
+          selected
+              ? Icon(Icons.check_circle_rounded, color: luna.accentStart)
+              : Icon(
+                  Icons.radio_button_unchecked,
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+        ],
       ),
     );
   }
@@ -271,16 +317,18 @@ class _DetailsPage extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        Text(l10n.aFewDetails,
-            style: theme.textTheme.headlineSmall
-                ?.copyWith(fontWeight: FontWeight.w800)),
+        GradientText(l10n.aFewDetails, style: theme.textTheme.headlineSmall),
         const SizedBox(height: 24),
         Card(
           child: ListTile(
             leading: const Icon(Icons.event_outlined),
             title: Text(l10n.lastPeriodStart),
-            subtitle: Text(DateFormat('d MMMM yyyy', l10n.localeName)
-                .format(lastPeriodStart)),
+            subtitle: Text(
+              DateFormat(
+                'd MMMM yyyy',
+                l10n.localeName,
+              ).format(lastPeriodStart),
+            ),
             trailing: const Icon(Icons.edit_calendar_outlined),
             onTap: onPickDate,
           ),
@@ -349,13 +397,11 @@ class _Stepper extends StatelessWidget {
             ),
             SizedBox(
               width: 64,
-              child: Text(
-                '$value',
-                textAlign: TextAlign.center,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleLarge
-                    ?.copyWith(fontWeight: FontWeight.w700),
+              child: Center(
+                child: GradientText(
+                  '$value',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
               ),
             ),
             IconButton.filledTonal(
@@ -382,12 +428,11 @@ class _Dots extends StatelessWidget {
           AnimatedContainer(
             duration: const Duration(milliseconds: 250),
             margin: const EdgeInsets.only(right: 6),
-            width: i == active ? 22 : 8,
+            width: i == active ? 26 : 8,
             height: 8,
             decoration: BoxDecoration(
-              color: i == active
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context).colorScheme.outlineVariant,
+              gradient: i == active ? context.luna.accent : null,
+              color: i == active ? null : Theme.of(context).colorScheme.outline,
               borderRadius: BorderRadius.circular(4),
             ),
           ),

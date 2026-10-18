@@ -6,17 +6,18 @@ import '../../core/db/app_database.dart';
 import '../../core/db/providers.dart';
 import '../../core/models/enum_labels.dart';
 import '../../core/theme/cycle_colors.dart';
+import '../../core/theme/luna_palette.dart';
 import '../../core/utils/date_helpers.dart';
 import '../../l10n/app_localizations.dart';
+import '../../shared/widgets/luna_ui.dart';
 
 /// Opens the daily log editor for [date] as a modal bottom sheet.
-Future<void> showLogEditorSheet(
-  BuildContext context,
-  DateTime date,
-) {
+Future<void> showLogEditorSheet(BuildContext context, DateTime date) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
+    // Above the bottom navigation bar, like a full-screen sheet.
+    useRootNavigator: true,
     builder: (_) => _LogEditorSheet(date: dateOnly(date)),
   );
 }
@@ -103,8 +104,10 @@ class _LogEditorSheetState extends ConsumerState<_LogEditorSheet> {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context);
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    final dateLabel =
-        DateFormat('EEEE, d MMMM', l10n.localeName).format(widget.date);
+    final dateLabel = DateFormat(
+      'EEEE, d MMMM',
+      l10n.localeName,
+    ).format(widget.date);
 
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
@@ -123,7 +126,10 @@ class _LogEditorSheetState extends ConsumerState<_LogEditorSheet> {
                     Row(
                       children: [
                         Expanded(
-                          child: Text(dateLabel, style: theme.textTheme.titleLarge),
+                          child: GradientText(
+                            dateLabel,
+                            style: theme.textTheme.headlineSmall,
+                          ),
                         ),
                         if (_existing)
                           IconButton(
@@ -148,7 +154,8 @@ class _LogEditorSheetState extends ConsumerState<_LogEditorSheet> {
                             label: Text(s.label(l10n)),
                             selected: _symptoms.contains(s),
                             onSelected: (sel) => setState(
-                              () => sel ? _symptoms.add(s) : _symptoms.remove(s),
+                              () =>
+                                  sel ? _symptoms.add(s) : _symptoms.remove(s),
                             ),
                           ),
                       ],
@@ -175,10 +182,7 @@ class _LogEditorSheetState extends ConsumerState<_LogEditorSheet> {
                       minLines: 2,
                       maxLines: 5,
                       textCapitalization: TextCapitalization.sentences,
-                      decoration: InputDecoration(
-                        hintText: l10n.notesHint,
-                        border: const OutlineInputBorder(),
-                      ),
+                      decoration: InputDecoration(hintText: l10n.notesHint),
                     ),
                     const SizedBox(height: 8),
                     SwitchListTile(
@@ -189,13 +193,11 @@ class _LogEditorSheetState extends ConsumerState<_LogEditorSheet> {
                       onChanged: (v) => setState(() => _intimacy = v),
                     ),
                     const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        onPressed: _save,
-                        icon: const Icon(Icons.check),
-                        label: Text(l10n.save),
-                      ),
+                    GlowButton(
+                      expand: true,
+                      onPressed: _save,
+                      icon: Icons.check_rounded,
+                      label: l10n.save,
                     ),
                   ],
                 ),
@@ -211,15 +213,7 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        text,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-      ),
-    );
+    return SectionLabel(text, padding: const EdgeInsets.only(bottom: 10));
   }
 }
 
@@ -257,6 +251,9 @@ class _FlowSelector extends StatelessWidget {
             label: Text(f.label(l10n)),
             selected: value == f,
             selectedColor: period,
+            side: BorderSide(
+              color: value == f ? period : context.luna.glassBorder,
+            ),
             labelStyle: TextStyle(
               color: value == f ? Colors.white : null,
               fontWeight: FontWeight.w600,

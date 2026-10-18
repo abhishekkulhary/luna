@@ -4,10 +4,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:luna/core/cycle/cycle_providers.dart';
 import 'package:luna/core/db/app_database.dart';
 import 'package:luna/core/db/providers.dart';
 import 'package:luna/core/theme/app_theme.dart';
+import 'package:luna/core/utils/date_helpers.dart';
 import 'package:luna/core/utils/pickers.dart';
+import 'package:luna/features/calendar/cycle_ring.dart';
 import 'package:luna/features/insights/insights_data.dart';
 import 'package:luna/features/insights/insights_screen.dart';
 import 'package:luna/features/onboarding/onboarding_screen.dart';
@@ -123,5 +126,32 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Select time'), findsOneWidget);
     expect(find.text('OK'), findsOneWidget);
+  });
+
+  testWidgets('cycle ring paints the current cycle in both themes',
+      (tester) async {
+    final container = ProviderContainer(
+      overrides: [
+        bleedingDaysProvider.overrideWithValue(
+            [for (var i = 9; i >= 5; i--) addDays(today(), -i)]),
+      ],
+    );
+    addTearDown(container.dispose);
+    final forecast = container.read(cycleForecastProvider);
+
+    for (final theme in [AppTheme.light(), AppTheme.dark()]) {
+      await tester.pumpWidget(MaterialApp(
+        theme: theme,
+        home: Scaffold(
+          body: CycleRing(
+            forecast: forecast,
+            colorFor: (_) => Colors.pink,
+            child: const Text('10'),
+          ),
+        ),
+      ));
+      expect(tester.takeException(), isNull);
+      expect(find.text('10'), findsOneWidget);
+    }
   });
 }

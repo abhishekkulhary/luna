@@ -37,23 +37,23 @@ class CycleColors extends ThemeExtension<CycleColors> {
   final Color pms;
 
   static const light = CycleColors(
-    period: Color(0xFFE53E6B),
-    periodContainer: Color(0xFFFFDCE5),
-    predictedPeriod: Color(0xFFF49CB6),
-    fertile: Color(0xFF2BA98F),
-    fertileContainer: Color(0xFFC6EFE5),
-    ovulation: Color(0xFF6C5CE7),
-    pms: Color(0xFFE08A2E),
+    period: Color(0xFFE2457A),
+    periodContainer: Color(0xFFFFDDE8),
+    predictedPeriod: Color(0xFFEE8FB3),
+    fertile: Color(0xFF16A386),
+    fertileContainer: Color(0xFFCDF3E9),
+    ovulation: Color(0xFF7A5CF0),
+    pms: Color(0xFFE5892E),
   );
 
   static const dark = CycleColors(
-    period: Color(0xFFFF6F92),
-    periodContainer: Color(0xFF5C2334),
-    predictedPeriod: Color(0xFF8E4A5C),
-    fertile: Color(0xFF5BD0B6),
-    fertileContainer: Color(0xFF173F37),
-    ovulation: Color(0xFF9B8CFF),
-    pms: Color(0xFFF0A85A),
+    period: Color(0xFFFF6B9D),
+    periodContainer: Color(0xFF4A1C37),
+    predictedPeriod: Color(0xFFD27AA0),
+    fertile: Color(0xFF5EE3C3),
+    fertileContainer: Color(0xFF123B39),
+    ovulation: Color(0xFFAE8EFF),
+    pms: Color(0xFFFFB86B),
   );
 
   @override
@@ -85,7 +85,11 @@ class CycleColors extends ThemeExtension<CycleColors> {
       periodContainer: Color.lerp(periodContainer, other.periodContainer, t)!,
       predictedPeriod: Color.lerp(predictedPeriod, other.predictedPeriod, t)!,
       fertile: Color.lerp(fertile, other.fertile, t)!,
-      fertileContainer: Color.lerp(fertileContainer, other.fertileContainer, t)!,
+      fertileContainer: Color.lerp(
+        fertileContainer,
+        other.fertileContainer,
+        t,
+      )!,
       ovulation: Color.lerp(ovulation, other.ovulation, t)!,
       pms: Color.lerp(pms, other.pms, t)!,
     );

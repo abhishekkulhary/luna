@@ -6,8 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/db/app_database.dart';
 import '../../core/db/providers.dart';
 import '../../core/notifications/notification_providers.dart';
+import '../../core/theme/luna_palette.dart';
 import '../../core/utils/pickers.dart';
 import '../../l10n/app_localizations.dart';
+import '../../shared/widgets/luna_ui.dart';
 import 'reminder_editor.dart';
 
 class RemindersScreen extends ConsumerWidget {
@@ -20,43 +22,43 @@ class RemindersScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(title: Text(l10n.remindersTitle)),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: GlowButton(
         onPressed: () => showReminderEditor(context),
-        icon: const Icon(Icons.add_alarm_outlined),
-        label: Text(l10n.addReminder),
+        icon: Icons.add_alarm_outlined,
+        label: l10n.addReminder,
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 96),
-        children: [
-          if (kIsWeb) const _WebNotice(),
-          settingsAsync.when(
-            loading: () => const Padding(
-              padding: EdgeInsets.all(24),
-              child: Center(child: CircularProgressIndicator()),
-            ),
-            error: (e, _) => Text('$e'),
-            data: (s) => _CycleNotifications(settings: s),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 110),
+            children: [
+              if (kIsWeb) const _WebNotice(),
+              settingsAsync.when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (e, _) => Text('$e'),
+                data: (s) => _CycleNotifications(settings: s),
+              ),
+              SectionLabel(l10n.yourReminders),
+              remindersAsync.when(
+                loading: () => const SizedBox.shrink(),
+                error: (e, _) => Text('$e'),
+                data: (reminders) => reminders.isEmpty
+                    ? const _EmptyReminders()
+                    : Column(
+                        children: [
+                          for (final r in reminders) _ReminderTile(reminder: r),
+                        ],
+                      ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-            child: Text(l10n.yourReminders,
-                style: Theme.of(context).textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w700)),
-          ),
-          remindersAsync.when(
-            loading: () => const SizedBox.shrink(),
-            error: (e, _) => Text('$e'),
-            data: (reminders) => reminders.isEmpty
-                ? const _EmptyReminders()
-                : Column(
-                    children: [
-                      for (final r in reminders) _ReminderTile(reminder: r),
-                    ],
-                  ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -66,19 +68,16 @@ class _WebNotice extends StatelessWidget {
   const _WebNotice();
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: Theme.of(context).colorScheme.secondaryContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            const Icon(Icons.info_outline),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(AppLocalizations.of(context).webNotice),
-            ),
-          ],
-        ),
+    return GlassPanel(
+      tint: context.luna.accentEnd,
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline_rounded, color: context.luna.accentEnd),
+          const SizedBox(width: 12),
+          Expanded(child: Text(AppLocalizations.of(context).webNotice)),
+        ],
       ),
     );
   }
@@ -93,15 +92,24 @@ class _CycleNotifications extends ConsumerWidget {
   }
 
   Future<void> _maybeAskPermission(WidgetRef ref, bool turningOn) async {
-    if (turningOn) await ref.read(notificationServiceProvider).requestPermissions();
+    if (turningOn) {
+      await ref.read(notificationServiceProvider).requestPermissions();
+    }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final time = TimeOfDay(hour: settings.reminderHour, minute: settings.reminderMinute);
+    final time = TimeOfDay(
+      hour: settings.reminderHour,
+      minute: settings.reminderMinute,
+    );
 
-    Widget toggle(String title, bool value, AppSettingsCompanion Function(bool) build) {
+    Widget toggle(
+      String title,
+      bool value,
+      AppSettingsCompanion Function(bool) build,
+    ) {
       return SwitchListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 8),
         title: Text(title),
@@ -113,51 +121,70 @@ class _CycleNotifications extends ConsumerWidget {
       );
     }
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-              child: Text(l10n.cycleNotifications,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w700, fontSize: 16)),
+    return GlassPanel(
+      padding: const EdgeInsets.all(8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 10, 8, 2),
+            child: Text(
+              l10n.cycleNotifications,
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-            ListTile(
-              leading: const Icon(Icons.schedule),
-              title: Text(l10n.notificationTime),
-              trailing: Text(time.format(context),
-                  style: Theme.of(context).textTheme.titleMedium),
-              onTap: () async {
-                final picked = await pickTime(context, time);
-                if (picked != null) {
-                  _patch(
-                    ref,
-                    AppSettingsCompanion(
-                      reminderHour: Value(picked.hour),
-                      reminderMinute: Value(picked.minute),
-                    ),
-                  );
-                }
-              },
+          ),
+          ListTile(
+            leading: const Icon(Icons.schedule),
+            title: Text(l10n.notificationTime),
+            trailing: GradientText(
+              time.format(context),
+              style: Theme.of(context).textTheme.titleLarge,
             ),
-            const Divider(height: 1),
-            toggle(l10n.togglePeriodSoon, settings.notifyPeriodSoon,
-                (v) => AppSettingsCompanion(notifyPeriodSoon: Value(v))),
-            toggle(l10n.togglePeriodStart, settings.notifyPeriodStart,
-                (v) => AppSettingsCompanion(notifyPeriodStart: Value(v))),
-            toggle(l10n.toggleFertileStart, settings.notifyFertileWindow,
-                (v) => AppSettingsCompanion(notifyFertileWindow: Value(v))),
-            toggle(l10n.toggleOvulation, settings.notifyOvulation,
-                (v) => AppSettingsCompanion(notifyOvulation: Value(v))),
-            toggle(l10n.togglePms, settings.notifyPms,
-                (v) => AppSettingsCompanion(notifyPms: Value(v))),
-            toggle(l10n.togglePeriodLate, settings.notifyPeriodLate,
-                (v) => AppSettingsCompanion(notifyPeriodLate: Value(v))),
-          ],
-        ),
+            onTap: () async {
+              final picked = await pickTime(context, time);
+              if (picked != null) {
+                _patch(
+                  ref,
+                  AppSettingsCompanion(
+                    reminderHour: Value(picked.hour),
+                    reminderMinute: Value(picked.minute),
+                  ),
+                );
+              }
+            },
+          ),
+          const Divider(height: 1),
+          toggle(
+            l10n.togglePeriodSoon,
+            settings.notifyPeriodSoon,
+            (v) => AppSettingsCompanion(notifyPeriodSoon: Value(v)),
+          ),
+          toggle(
+            l10n.togglePeriodStart,
+            settings.notifyPeriodStart,
+            (v) => AppSettingsCompanion(notifyPeriodStart: Value(v)),
+          ),
+          toggle(
+            l10n.toggleFertileStart,
+            settings.notifyFertileWindow,
+            (v) => AppSettingsCompanion(notifyFertileWindow: Value(v)),
+          ),
+          toggle(
+            l10n.toggleOvulation,
+            settings.notifyOvulation,
+            (v) => AppSettingsCompanion(notifyOvulation: Value(v)),
+          ),
+          toggle(
+            l10n.togglePms,
+            settings.notifyPms,
+            (v) => AppSettingsCompanion(notifyPms: Value(v)),
+          ),
+          toggle(
+            l10n.togglePeriodLate,
+            settings.notifyPeriodLate,
+            (v) => AppSettingsCompanion(notifyPeriodLate: Value(v)),
+          ),
+        ],
       ),
     );
   }
@@ -169,8 +196,10 @@ class _ReminderTile extends ConsumerWidget {
 
   String _subtitle(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final time = TimeOfDay(hour: reminder.hour, minute: reminder.minute)
-        .format(context);
+    final time = TimeOfDay(
+      hour: reminder.hour,
+      minute: reminder.minute,
+    ).format(context);
     final repeat = switch (reminder.repeat) {
       ReminderRepeat.once => l10n.repeatOnce,
       ReminderRepeat.daily => l10n.repeatDaily,
@@ -189,7 +218,7 @@ class _ReminderTile extends ConsumerWidget {
         padding: const EdgeInsets.only(right: 24),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.errorContainer,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(24),
         ),
         child: const Icon(Icons.delete_outline),
       ),
@@ -198,10 +227,26 @@ class _ReminderTile extends ConsumerWidget {
         ref.read(notificationSchedulerProvider).cancelReminder(reminder.id);
       },
       child: Card(
-        margin: const EdgeInsets.only(bottom: 8),
+        margin: const EdgeInsets.only(bottom: 10),
         child: ListTile(
-          leading: const Icon(Icons.notifications_active_outlined),
-          title: Text(reminder.title),
+          contentPadding: const EdgeInsets.fromLTRB(16, 6, 12, 6),
+          leading: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: context.luna.accentEnd.withValues(alpha: 0.16),
+            ),
+            child: Icon(
+              Icons.notifications_active_outlined,
+              color: context.luna.accentEnd,
+              size: 20,
+            ),
+          ),
+          title: Text(
+            reminder.title,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
           subtitle: Text(_subtitle(context)),
           trailing: Switch(
             value: reminder.enabled,
@@ -223,11 +268,16 @@ class _EmptyReminders extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       child: Column(
         children: [
-          Icon(Icons.notifications_none,
-              size: 48, color: Theme.of(context).colorScheme.outline),
-          const SizedBox(height: 8),
-          Text(AppLocalizations.of(context).noCustomReminders,
-              style: Theme.of(context).textTheme.bodyMedium),
+          Icon(
+            Icons.notifications_none_rounded,
+            size: 48,
+            color: context.luna.accentEnd.withValues(alpha: 0.7),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            AppLocalizations.of(context).noCustomReminders,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
         ],
       ),
     );

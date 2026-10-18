@@ -59,7 +59,7 @@ extension MoodX on Mood {
   String get emoji => switch (this) {
         Mood.happy => '😊',
         Mood.calm => '😌',
-        Mood.energetic => '⚡',
+        Mood.energetic => '⚡\u{FE0F}', // emoji presentation, not the text glyph
         Mood.sensitive => '🥺',
         Mood.sad => '😔',
         Mood.irritable => '😠',

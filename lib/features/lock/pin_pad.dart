@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../core/theme/luna_palette.dart';
 import '../../l10n/app_localizations.dart';
 
 /// A reusable PIN entry pad with dots and a numeric keypad.
@@ -78,21 +79,37 @@ class _PinPadState extends State<PinPad> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             for (var i = 0; i < widget.length; i++)
-              Container(
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 160),
                 margin: const EdgeInsets.symmetric(horizontal: 10),
                 width: 16,
                 height: 16,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: i < _value.length
-                      ? (_error ? theme.colorScheme.error : theme.colorScheme.primary)
-                      : Colors.transparent,
-                  border: Border.all(
-                    color: _error
-                        ? theme.colorScheme.error
-                        : theme.colorScheme.outline,
-                    width: 2,
-                  ),
+                  gradient: i < _value.length && !_error
+                      ? context.luna.accent
+                      : null,
+                  color: _error && i < _value.length
+                      ? theme.colorScheme.error
+                      : null,
+                  boxShadow: i < _value.length && !_error
+                      ? [
+                          BoxShadow(
+                            color: context.luna.accentStart.withValues(
+                              alpha: 0.6,
+                            ),
+                            blurRadius: 10,
+                          ),
+                        ]
+                      : null,
+                  border: i < _value.length
+                      ? null
+                      : Border.all(
+                          color: _error
+                              ? theme.colorScheme.error
+                              : theme.colorScheme.outline,
+                          width: 2,
+                        ),
                 ),
               ),
           ],
@@ -155,8 +172,8 @@ class _Key extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Material(
-      color: theme.colorScheme.surfaceContainerHighest,
-      shape: const CircleBorder(),
+      color: context.luna.glassStrong,
+      shape: CircleBorder(side: BorderSide(color: context.luna.glassBorder)),
       child: InkWell(
         customBorder: const CircleBorder(),
         onTap: onTap,
@@ -165,8 +182,9 @@ class _Key extends StatelessWidget {
               ? Icon(icon, size: 26)
               : Text(
                   label!,
-                  style: theme.textTheme.headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.w600),
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
         ),
       ),
