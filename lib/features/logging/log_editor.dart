@@ -166,6 +166,9 @@ class _LogEditorSheetState extends ConsumerState<_LogEditorSheet> {
                       children: [
                         for (final m in Mood.values)
                           FilterChip(
+                            // The selected tint marks the choice; a checkmark
+                            // would be drawn over the emoji.
+                            showCheckmark: false,
                             avatar: Text(m.emoji),
                             label: Text(m.label(l10n)),
                             selected: _moods.contains(m),
@@ -243,6 +246,7 @@ class _FlowSelector extends StatelessWidget {
       children: [
         for (final f in FlowIntensity.values)
           ChoiceChip(
+            showCheckmark: false, // would cover the flow icon
             avatar: Icon(
               f.icon,
               size: 18,
