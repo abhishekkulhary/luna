@@ -4,6 +4,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:luna/core/cycle/cycle_providers.dart';
+import 'package:luna/core/db/app_database.dart';
+import 'package:luna/core/db/providers.dart';
 import 'package:luna/core/utils/date_helpers.dart';
 
 void main() {
@@ -15,6 +17,10 @@ void main() {
           addDays(today(), -1),
           today(),
         ]),
+        // The forecast also watches settings. Left real, that opens the
+        // encrypted database in the background, which fails intermittently on
+        // the Linux CI runner; an empty stream keeps the default settings.
+        settingsProvider.overrideWith((ref) => const Stream<AppSetting>.empty()),
       ],
     );
     addTearDown(container.dispose);
