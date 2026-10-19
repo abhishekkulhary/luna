@@ -13,6 +13,7 @@ import '../../core/security/lock_providers.dart';
 import '../../l10n/app_localizations.dart';
 import '../../shared/widgets/app_logo.dart';
 import '../../shared/widgets/luna_ui.dart';
+import '../get_the_app/build_stamp.dart';
 import '../lock/pin_setup.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -191,6 +192,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
                 _Footnote(l10n.privacyNote),
                 _Footnote(l10n.medicalDisclaimerNote),
+                const SizedBox(height: 20),
+                const Center(child: BuildStamp()),
               ],
             ),
           ),
